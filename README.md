@@ -1,4 +1,4 @@
 PaintBoard
 ==========
 
-A MFC application to anylise the image and paint its path on the screen
+A MFC application to anylise the image and paint its path on the screen by using OpenCV library
