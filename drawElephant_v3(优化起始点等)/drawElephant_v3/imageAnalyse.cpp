@@ -5,12 +5,19 @@
 #include "imageAnalyse.h"
 
 imageAnalyse::imageAnalyse(){
+	init();
+}
+
+void imageAnalyse::init()
+{
 	canCount = 0;
 	isEnd = false;
 	memset(sendBuf, 0, sizeof(TCHAR)*SEND_BUF_SIZE);
 	sendBufLen = 0;
 	data = NULL;
 	sendQueue = initQueue();
+	origin_node_vec.clear();
+	node_list_vec3d.clear();
 }
 
 bool imageAnalyse::isEmpty(header* head){
@@ -65,7 +72,6 @@ queue* imageAnalyse::getQueue(header* head){
 	return p;
 }
 
-// 双向链表初始化
 DLheader* imageAnalyse::initDblList(){
 	DLheader *head = (DLheader*)malloc(sizeof(DLheader));
 	head->front = NULL;
@@ -256,11 +262,12 @@ void imageAnalyse::image2Arr(char* path){
 	copy = cvCreateImage(cvGetSize(src), src->depth, 3);
 	//
 	threshImg = cvCreateImage(cvGetSize(src),src->depth,src->nChannels);
-	cvAdaptiveThreshold(src,threshImg,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C,CV_THRESH_BINARY,55,5);
-	//cvThreshold(src,threshImg,75,255,CV_THRESH_BINARY);
-/*
-	cvNamedWindow("thresh", CV_WINDOW_AUTOSIZE );
-	cvShowImage("thresh", threshImg);*/
+	// 自适应阈值化有时会出现处理图像空白处出现噪声点，固定阈值阈值化会发生断点情况  待解决
+	//cvAdaptiveThreshold(src,threshImg,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C,CV_THRESH_BINARY,55,5);
+	cvThreshold(src,threshImg,75,255,CV_THRESH_BINARY);
+
+	//cvNamedWindow("thresh", CV_WINDOW_AUTOSIZE );
+	//cvShowImage("thresh", threshImg);
 
 	canImg = cvCreateImage(cvGetSize(src),src->depth,src->nChannels);
 	cvCanny(threshImg,canImg,100,150,5);
@@ -426,25 +433,22 @@ vector<point*> imageAnalyse::findNeighbor(int x, int y, bool special, int* branc
 			data[y-1][x+1].flag = 1;
 	}
 
-	// 十字方向上的点
 	for(int i=0;i<p_count;i++){
-		if(branch_count!=NULL){   // 函数定义中的参数 branch_count 有什么用呢？ 判断是否对分支个数进行更新
+		if(branch_count!=NULL){
 			b_count++;
 		}
-		if(special){  // special 特殊情况？
-			// data的flag=2、3即跳过？
+		if(special){
 			if(data[coor_y[i]][coor_x[i]].flag==2||data[coor_y[i]][coor_x[i]].flag==3)
 				continue;
 		}
-		if(data[coor_y[i]][coor_x[i]].flag!=1){ // 该点未访问，根据前面推出即该点是黑点
+		if(data[coor_y[i]][coor_x[i]].flag!=1){
 			branch_vec.push_back(&data[coor_y[i]][coor_x[i]]);
 		}
 	}
-	// 对角线上的点
+
 	for(int i=0;i<p_count2;i++){
 		int j;
 		for(j=0;j<p_count;j++){
-			// 已有十字方向上的至少一个相邻点,跳过
 			if((abs(coor_x[j]-coor_x2[i])+abs(coor_y[j]-coor_y2[i]))==1){
 				break;
 			}
@@ -464,7 +468,6 @@ vector<point*> imageAnalyse::findNeighbor(int x, int y, bool special, int* branc
 		}
 	}
 
-	// 更新统计的branch_count值
 	if(branch_count!=NULL)
 		memcpy(branch_count,&b_count,sizeof(int));
 
@@ -538,9 +541,9 @@ void imageAnalyse::arr2Graph(){
 	int branch_count = 0;
 
 	while(true){
-		start_p = findNext(); 
+		start_p = findNext();
 		if(start_p==NULL)
-			break; // 直到所有的点已访问
+			break;
 		x = start_p->x;
 		y = start_p->y;
 		start_node = (Node*)malloc(sizeof(Node));
@@ -551,7 +554,7 @@ void imageAnalyse::arr2Graph(){
 		start_node->flag = 0;
 		start_node->unclose = 0;
 		start_node->origin = 0;
-		node_vec.push_back(start_node); 
+		node_vec.push_back(start_node);
 
 		while(!node_vec.empty()){
 			// 取出顶端元素
@@ -560,9 +563,9 @@ void imageAnalyse::arr2Graph(){
 			branch_vec = findNeighbor(node->x,node->y, false);
 			if(node->flag==0){
 				if(branch_vec.size()==1)
-					node->flag = 2; // 边界结点
+					node->flag = 2;
 				else if(branch_vec.size()>2)
-					node->flag = 1; // 普通结点
+					node->flag = 1;
 			}
 			//if(node->x==442&&node->y==105)
 			//{int iii=0;}
@@ -570,10 +573,8 @@ void imageAnalyse::arr2Graph(){
 		/*	for(int j=0;j<branch_vec.size();j++){
 				data[branch_vec[j]->y][branch_vec[j]->x].flag = 2;
 			}*/
-			data[node->y][node->x].flag = 3; // 3为什么意思？
+			data[node->y][node->x].flag = 3;
 			vector<point*>::iterator it=branch_vec.begin();
-
-			//遍历分支点，构造Edge
 			for(int i=node->edge_count;it!=branch_vec.end();it++,i++){
 				point* p = (point*)*it;
 				if(data[p->y][p->x].flag==1)
@@ -589,21 +590,18 @@ void imageAnalyse::arr2Graph(){
 				//用来前一段计算角度
 				int x1=-1,x2=-1,y1=-1,y2=-1;
 				//后一段角度
-				header* angle_head=NULL; 
+				header* angle_head=NULL;
 				int angle_list_size = 0;
 				angle_head = initQueue();
-				add2Queue(node->x,node->y,0,angle_head); // 当前结点存放到链表的头部
+				add2Queue(node->x,node->y,0,angle_head);
 
-				add2List(p->x,p->y,head); // 结点的邻居，即边的头存放到双向链表的头部
+				add2List(p->x,p->y,head);
 				x1 = p->x;
 				y1 = p->y;
 
-				p_vec = findNeighbor(p->x, p->y, true, &branch_count); 
-				// 在这种special为true的情况下找到的point不包括flag为2或3的点，
-				// 注：已访问过的点始终不包括, branch_count始终为实际显示的分支数
-
+				p_vec = findNeighbor(p->x, p->y, true, &branch_count);
 				//被访问
-				data[p->y][p->x].flag = 1;
+	data[p->y][p->x].flag = 1;
 				while(true){
 					add2Queue(p->x,p->y,0,angle_head);
 					if(angle_list_size>10){
@@ -633,11 +631,11 @@ void imageAnalyse::arr2Graph(){
 							queue* q1 = angle_head->front;
 							queue* q2 = angle_head->tail;
 							n->angle[0] = calAngle(q1->x,q2->x,q1->y,q2->y);
-							// 找到起始的原点
+
 							origin_node_vec.push_back(n);
 							break;
 						}
-						else{ 
+						else{
 							p = p_vec[0];
 							//已访问
 							data[p->y][p->x].flag = 1;
@@ -667,14 +665,14 @@ void imageAnalyse::arr2Graph(){
 						//已访问
 						data[p->y][p->x].flag = 1;
 						add2List(p->x,p->y,head);
-						if(count==1)	
+						if(count==1)
 							p_vec = findNeighbor(p->x, p->y,true, &branch_count);
 						else
 							p_vec = findNeighbor(p->x, p->y,false, &branch_count);
 					}
-					else{ // branch_count = 3 4
+					else{
 						data[p->y][p->x].flag = 0;
-						//查找该点是否存在
+						//查找该点是否已在
 						exist_it = find_if(node_vec.begin(),node_vec.end(),vec_finder(p->x,p->y));
 						queue* q1 = angle_head->front;
 						queue* q2 = angle_head->tail;
@@ -751,16 +749,17 @@ void imageAnalyse::arr2Graph(){
 Node* imageAnalyse::getNearstNode(int x,int y, int* pos){
 	Node* node;
 	Node* result=NULL;
-	int min = width+height;
+	int min = pow((float)width,2)+pow((float)height,2); // 计算直线距离或许会找的更精确一点
+	int templen;
 	vector<Node*>::iterator it = origin_node_vec.begin();
 	for(int i=0;it!=origin_node_vec.end();i++,it++){
 		node = *it;
-		if(node->x+node->y-x-y<min){
-			min = node->x+node->y-x-y;
+		templen = pow(((float)(node->x-x)),2)+pow((float)(node->y-y),2);
+		if(templen<min){
+			min = templen;
 			result = node;
 			*pos = i;
 		}
-
 	}//for origin itrator
 	return result;
 }
@@ -935,7 +934,7 @@ void imageAnalyse::find_v2(){
 						edge_visited_count++;
 						continue;
 					}
-					if(node->origin==1){
+					if(node->origin==1){  // 端结点是没有先前访问的边的
 						for(int j=0;j<node->edge_count;j++){
 							if(node->arc[j]->flag==0){
 								pre_edge = node->arc[j];
@@ -1037,7 +1036,7 @@ void imageAnalyse::find_v2(){
 		closed_circuit_vec.clear();
 		if(origin_node_vec.empty())
 			break;
-	} // while(true)
+	}
 
 }
 
@@ -1127,6 +1126,34 @@ int imageAnalyse::getWidth(){
 int imageAnalyse::getHeight(){
 	return height;
 }
+
+int imageAnalyse::saveThreshImg(CString path)
+{
+	IplImage *thresImg;
+	thresImg =  cvCreateImage(cvGetSize(copy),copy->depth,1);
+	for(int y=0;y<height;y++){
+		for(int x=0;x<width;x++){
+			if(data[y][x].val==1)
+				cvSetReal2D(thresImg,y,x,0);
+			else
+				cvSetReal2D(thresImg,y,x,255);
+		}
+			
+	}
+	
+	return cvSaveImage(CString2char(path),thresImg);
+}
+
+const char* imageAnalyse::CString2char(CString cstr)
+{
+	// 此处用到了宽字节的转换
+	DWORD size; 
+	size = WideCharToMultiByte(CP_OEMCP,NULL,cstr,-1,NULL,0,NULL,FALSE);
+	char *newstr = new char[size];
+	WideCharToMultiByte(CP_OEMCP,NULL,cstr,-1,newstr,size,NULL,FALSE);
+	return newstr;
+}
+
 
 /*void imageAnalyse::sendPacket(int length, TCHAR* szBuf){
 int count = 0;

@@ -17,7 +17,7 @@
 class CAboutDlg : public CDialogEx
 {
 public:
-	CAboutDlg();
+	CAboutDlg();	
 
 // 对话框数据
 	enum { IDD = IDD_ABOUTBOX };
@@ -70,6 +70,7 @@ BEGIN_MESSAGE_MAP(CdrawElephant_v3Dlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON_CHOOSE, &CdrawElephant_v3Dlg::OnBnClickedButtonChooseFilePath)
 	ON_BN_CLICKED(IDC_BUTTON4, &CdrawElephant_v3Dlg::OnBnClickedReset)
+	ON_BN_CLICKED(IDC_BUTTON7, &CdrawElephant_v3Dlg::OnBnClickedExport)
 END_MESSAGE_MAP()
 
 
@@ -108,6 +109,7 @@ BOOL CdrawElephant_v3Dlg::OnInitDialog()
 	(CButton *)GetDlgItem(IDC_BUTTON5)->EnableWindow(false);		
 	(CButton *)GetDlgItem(IDC_BUTTON1)->EnableWindow(false);		//开始
 	(CButton *)GetDlgItem(IDC_BUTTON2)->EnableWindow(false);	//暂停
+	(CButton *)GetDlgItem(IDC_BUTTON7)->EnableWindow(false);	//导出
 
 	chessboard.setHDC(m_hWnd);
 	imageboard.setHDC(m_hWnd);
@@ -119,7 +121,7 @@ BOOL CdrawElephant_v3Dlg::OnInitDialog()
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
-
+	
 void CdrawElephant_v3Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
@@ -190,7 +192,8 @@ void CdrawElephant_v3Dlg::OnBnClickedAnalyse()
 	//可以开始了
 	(CButton *)GetDlgItem(IDC_BUTTON1)->EnableWindow(true);
 	(CButton *)GetDlgItem(IDC_BUTTON2)->EnableWindow(true);
-	//设置宽高
+	(CButton *)GetDlgItem(IDC_BUTTON7)->EnableWindow(true);
+	//绘图画板
 	chessboard.setWidth(image.getWidth());
 	chessboard.setHeight(image.getHeight());
 	chessboard.initBoard();
@@ -198,6 +201,7 @@ void CdrawElephant_v3Dlg::OnBnClickedAnalyse()
 	head = image.getList();
 	p = head->front;
 
+	//预览画板
 	imageboard.setWidth(image.getWidth());
 	imageboard.setHeight(image.getHeight());
 	imageboard.showBoard(head);
@@ -292,6 +296,47 @@ void CdrawElephant_v3Dlg::OnBnClickedButtonChooseFilePath()
 
 void CdrawElephant_v3Dlg::OnBnClickedReset()
 {
-	OnInitDialog(); 
+	OnInitDialog();
+	Invalidate();
+	image.init();
+}
 
+
+
+void CdrawElephant_v3Dlg::OnBnClickedExport()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if(!isInited){
+		AfxMessageBox(_T("请先分析"));
+		return;
+	}
+	CString suffix;
+	CString path;
+	AfxExtractSubString(path,strFile,0,'.');
+	AfxExtractSubString(suffix,strFile,1,'.');
+	CString newPath = path + _T("_After.") + suffix;
+	if(image.saveThreshImg(newPath))
+		AfxMessageBox(_T("保存到 ")+newPath);
+	else
+		AfxMessageBox(_T("存储失败"));
+
+}
+
+BOOL CdrawElephant_v3Dlg::PreTranslateMessage( MSG* pMsg )
+{
+
+	if(pMsg->message == WM_KEYDOWN) 
+		// 捕捉空格按键
+		if(pMsg->wParam == VK_SPACE && isInited)
+		{
+			OnBnClickedPause();
+			return TRUE;
+		}
+		// 回车按键
+		if(pMsg->wParam == VK_RETURN  && GetFocus()==GetDlgItem(IDC_EDIT1))
+		{
+			OnBnClickedChangeInterval();
+			return TRUE;
+		}
+	return FALSE;
 }

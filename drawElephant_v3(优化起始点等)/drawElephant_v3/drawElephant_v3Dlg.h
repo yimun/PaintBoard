@@ -38,6 +38,7 @@ public:
 	afx_msg void OnBnClickedPause();
 	afx_msg void OnBnClickedChangeInterval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	BOOL CdrawElephant_v3Dlg::PreTranslateMessage( MSG* pMsg );
 	bool isInited;
 	bool isRun;
 	int interval;
@@ -53,4 +54,5 @@ private:
 public:
 	afx_msg void OnBnClickedButtonChooseFilePath();
 	afx_msg void OnBnClickedReset();
+	afx_msg void OnBnClickedExport();
 };

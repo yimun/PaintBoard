@@ -23,7 +23,14 @@ void chessBoard::setWidth(int width){
 }
 
 void chessBoard::initBoard(){
-	boardStart_x = 200 + width + 20;
+	if(width>height){
+		boardStart_x = 150 + 400 + 20;
+		boardStart_y = 20 + (400-height)/2;
+	}
+	else{
+		boardStart_x = 150 + 400 + (400-width)/2 + 20;
+		boardStart_y = 20;
+	}
 	int i=0;
 	int length_x = width*gridInnerSize;
 	int length_y = height*gridInnerSize;
@@ -41,6 +48,9 @@ void chessBoard::initBoard(){
 	MoveToEx(hdc,boardStart_x+length_x,boardStart_y,NULL);
 	LineTo(hdc,boardStart_x+length_x,boardStart_y+length_y);
 }
+
+
+
 
 void chessBoard::cover(int x, int y){
 	int _x = x + boardStart_x;

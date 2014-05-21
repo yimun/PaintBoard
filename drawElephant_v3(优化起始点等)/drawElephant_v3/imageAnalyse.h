@@ -110,6 +110,7 @@ private:
 	void thin();
 	CvSize changeSize(int w,int h);
 
+	
 	//初始化队列
 	header* initQueue();
 	//向队列添加一个点
@@ -139,6 +140,7 @@ private:
 public:
 	imageAnalyse();
 	bool isEmpty(header* head);
+	void init();
 	//载入图像预处理，并转换为数组矩阵
 	void image2Arr(char* path);
 	void arr2Graph();
@@ -160,4 +162,6 @@ public:
 	void send(TCHAR* szBuf);
 	//void reply(bool ok);
 	bool isEnd;
+	int saveThreshImg(CString path);
+	const char* CString2char(CString cstr);
 };
