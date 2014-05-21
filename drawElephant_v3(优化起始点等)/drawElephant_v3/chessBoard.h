@@ -2,7 +2,7 @@
 
 #include<Windows.h>
 #include "stdafx.h"
-
+// chessboard
 class chessBoard
 {
 protected:
