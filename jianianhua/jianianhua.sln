@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jianianhua", "tdm\tdm.vcxproj", "{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		linweiWin32Release|Win32 = linweiWin32Release|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.Debug|Win32.Build.0 = Debug|Win32
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.linweiWin32Release|Win32.ActiveCfg = linweiWin32Release|Win32
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.linweiWin32Release|Win32.Build.0 = linweiWin32Release|Win32
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.Release|Win32.ActiveCfg = Release|Win32
+		{ADE0C83E-14EC-4F5E-AD3C-2735ED9526E1}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
